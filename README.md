@@ -21,6 +21,12 @@ Open http://127.0.0.1:8887/games/prism-breaker/. The host assigns a signed brows
 
 `RUNTIME_URL` can point to an already-running private native runtime; then the host does not start a child process. `RUNTIME_BINARY` overrides the native executable for a local build. `SESSION_SECRET` optionally separates cookie signing from the runtime token. Keep all secrets server-side. UTXOPlay integration uses authenticated `X-Runtime-Token` / `X-UTXOPlay-Account` requests to this host, preserving original account IDs. Independent browser guests have separate identities.
 
+## Controls
+
+On touch screens, drag anywhere on the play surface to move the paddle, tap to pulse, and swipe diagonally upward left/right to refract. Lifting and placing the finger again starts relative to the paddle; no bottom skill buttons are needed. Instructions appear before play and in the menu.
+
+With a mouse, move to aim and click to pulse. Arrow keys/A/D steer, Q/E refract, Space pulses, and P pauses. Focus Lens is in Settings or toggled with F.
+
 ## Source layout and compatibility
 
 `game-host.json` lists games, their browser package paths, native URL prefixes and native launch command. `games/` retains the original source layout so Myelin `include_bytes!` inputs remain byte-for-byte identical. `tools/build-web.mjs` packages each game's assets into its own URL namespace; it does not fetch store files. Shared presentation helpers are owned snapshots in this repository.

@@ -1,5 +1,7 @@
 import {PERKS,levels} from './prism-engine.mjs';
 import {pointerInViewport} from './viewport.mjs';
+import {PrismPointer,PrismGestures} from './prism-pointer.mjs';
+import {sameGameState} from './state-equal.mjs';
 import {createGame,step,kinds} from './engine.mjs';
 import {InputBuffer,BoardGesture,feedback,runSummary} from './presentation.mjs';
 import {ArcadeRenderer} from './renderer.mjs';
@@ -8,7 +10,7 @@ import {setText,startRenderLoop,readQuality} from './performance.mjs';
 globalThis.UTXOPlayLoader?.boot();
 const id=location.pathname.split('/')[2];
 const config={
- 'prism-breaker':{title:'Prism Breaker',label:'01 / REFRACTION LAB',accent:'#b7a2ff',intro:'Bend light. Rewrite the angle.',goal:'Conquer 24 distinct crystal sectors. Collect six capsule types, break armoured and explosive gems, and choose a permanent perk after every sector. Break crystals to charge Refraction. Q / E bends every ball up-left / up-right for 4 charge. Space fires a column pulse every 12 seconds.',keys:['←','→','Q','E','SPACE'],tip:'Mouse, arrows or touch drag steer the paddle. F toggles Focus Lens: a projected path and landing marker with the paddle held still. Aim with the edges to change the return angle.'},
+ 'prism-breaker':{title:'Prism Breaker',label:'01 / REFRACTION LAB',accent:'#b7a2ff',intro:'Bend light. Rewrite the angle.',goal:'Conquer 24 distinct crystal sectors. Collect six capsule types, break armoured and explosive gems, and choose a permanent perk after every sector. Break crystals to charge Refraction. Q / E bends every ball up-left / up-right for 4 charge. Space fires a column pulse every 12 seconds.',keys:['←','→','Q','E','SPACE'],tip:'Drag anywhere to steer. Tap to pulse. Swipe up-left or up-right to bend the ball. Mouse moves steer; click pulses. Arrow keys move, Q/E bend and Space pulses. Focus Lens is in Settings (F).'},
  'neon-coil':{title:'Neon Coil',label:'02 / LIVING CIRCUIT',accent:'#84efba',intro:'Grow a circuit. Close it. Cash it in.',goal:'Eat nodes until your coil has at least 9 segments. Turn back into a distant segment to enclose empty tiles: the circuit discharges for 40 + 10 per tile, leaving a short tail. Small knots and walls are still fatal.',keys:['↑','←','↓','→'],tip:'Arrow keys or WASD to turn. Swipe on the board or use the direction buttons. Gold segments mark possible connection points. Enclose at least one whole grid tile; a tight knot will not discharge.'},
  'starfall':{title:'Starfall',label:'03 / ORBITAL DEFENCE',accent:'#7edaff',intro:'Catch their fire. Send it home.',goal:'Hold W or CAPTURE to absorb up to 6 enemy shots, then release to reflect a spreading volley. Shooting pauses while you capture. Hold for 1.5 seconds and the shield overheats for 2 seconds: choose your window carefully.',keys:['←','→','W','SPACE'],tip:'Move the mouse, use A/D, or drag to steer. Auto fire is on by default; turn it off to fire manually with Space or FIRE.'},
  'drift-run':{title:'Drift Run',label:'04 / AFTER HOURS',accent:'#ffbc83',intro:'Leave an echo. Steal a second line.',goal:'Changing lanes leaves a short-lived echo that can catch rings in the lane you left. Echo rings and close passes beside barriers charge OVERDRIVE. Spend 3 charge with Space to smash through barriers for 1.5 seconds.',keys:['←','→','SPACE'],tip:'Tap left or right to change lanes. Swipe sideways on the road, or use the touch arrows. Stay clear of the coral barriers.'}
@@ -18,6 +20,7 @@ const $=s=>document.querySelector(s),canvas=$('canvas');
 const {PrismRenderer}=id==='prism-breaker'?await import('./prism-renderer.mjs'):{};
 const renderer=id==='prism-breaker'?new PrismRenderer(canvas):new ArcadeRenderer(canvas,id,config.accent);
 const input=new InputBuffer(id),gesture=new BoardGesture(id),audio=new ArcadeAudio();
+const prismPointer=id==='prism-breaker'?new PrismPointer():null,prismGestures=prismPointer?new PrismGestures():null;
 const motion=matchMedia('(prefers-reduced-motion: reduce)');
 const read=(key,fallback)=>{try{return localStorage.getItem(key)||fallback;}catch{return fallback;}};
 const write=(key,value)=>{try{localStorage.setItem(key,String(value));}catch{}};
@@ -29,6 +32,7 @@ let noticeTime=0,quality=readQuality(),artworkReady=false;
 if(id==='prism-breaker'){
  renderer.setLens(read('utxoplay:prism-lens','on')==='on');
  const lens=$('#prism-lens');
+ $('#game-menu [data-menu-view="settings"]')?.append(lens);
  const label=()=>{lens.setAttribute('aria-pressed',String(renderer.lens));lens.querySelector('span').textContent=renderer.lens?'Direction hint ON':'Direction hint OFF';};
  lens.onclick=()=>{renderer.setLens(!renderer.lens);write('utxoplay:prism-lens',renderer.lens?'on':'off');label();if(running||countdown)canvas.focus();};label();
 }
@@ -74,7 +78,7 @@ function updateHud(){
     setText('prism-pulse',predicted.cooldown?'PULSE '+Math.ceil(predicted.cooldown/30)+'s':'PULSE · SPACE');
     $('#prism-pulse').setAttribute('aria-disabled',String(!running||predicted.cooldown>0));
     const effects=[predicted.wide?'LONGBOARD '+Math.ceil(predicted.wide/30)+'s':'',predicted.slow?'SLOW '+Math.ceil(predicted.slow/30)+'s':'',predicted.pierce?'PHASE '+Math.ceil(predicted.pierce/30)+'s':'',predicted.shield?'SHIELD ×'+predicted.shield:''].filter(Boolean);
-    setText('prism-effects',effects.join(' · ')||'Catch capsules · Space to pulse');
+    setText('prism-effects',effects.join(' · '));
   }
 
   if(hud.score!==predicted.score){hud.score=predicted.score;setText('score',predicted.score.toLocaleString());}
@@ -92,7 +96,7 @@ const qualityChanged=()=>{quality=readQuality();};
 addEventListener('storage',qualityChanged);addEventListener('utxoplay:quality',qualityChanged);
 const status=t=>setText('status',t);
 const announce=t=>setText('announcement',t);
-function clearInput(){input.clear();gesture.clear();hoverX=null;document.querySelectorAll('[data-input]').forEach(b=>b.classList.remove('pressed'));}
+function clearInput(){input.clear();gesture.clear();prismPointer?.clear();prismGestures?.clear();hoverX=null;document.querySelectorAll('[data-input]').forEach(b=>b.classList.remove('pressed'));}
 function syncView(){previous=structuredClone(predicted);renderer.reset();accumulator=0;}
 function showOverlay(title,text,button,art=false){overlayAction='play';$('#cancel-restart').hidden=true;$('#run-stats').hidden=true;setText('overlay-title',title);setText('overlay-text',text);setText('launch',button);$('#overlay').dataset.art=String(art);$('#overlay').hidden=false;$('#countdown').hidden=true;countdown=0;}
 function refreshButtons(){
@@ -115,7 +119,7 @@ for(const b of document.querySelectorAll('.touch button'))if((id!=='neon-coil'&&
 audio.enabled=read('utxoplay:arcade-sound','off')==='on';
 function soundLabel(){setText('sound',audio.enabled?'Sound on':'Sound off');$('#sound').setAttribute('aria-pressed',String(audio.enabled));}
 soundLabel();$('#quality').value=readQuality();
-const hints={'prism-breaker':'Mouse to aim · drag or hold arrows on touch','neon-coil':'Swipe once per turn · or use the D-pad',starfall:'Drag to steer · Space or FIRE for manual shots','drift-run':'One swipe = one lane · arrows also work'};
+const hints={'prism-breaker':'Drag to move · tap to pulse · swipe ↖ / ↗ to bend','neon-coil':'Swipe once per turn · or use the D-pad',starfall:'Drag to steer · Space or FIRE for manual shots','drift-run':'One swipe = one lane · arrows also work'};
 setText('play-hint',hints[id]);
 function fireLabel(){setText('autofire',autoFire?'Auto fire on':'Auto fire off');$('#autofire').setAttribute('aria-pressed',String(autoFire));}
 $('#autofire').hidden=id!=='starfall';fireLabel();
@@ -130,7 +134,7 @@ async function flush(){
     confirmed=result;
     // Keep visual history when prediction agrees; reconcile only on a real correction.
     const authoritative=structuredClone(result.game);for(const i of pending)step(authoritative,i);
-    if(JSON.stringify(authoritative)!==JSON.stringify(predicted)){predicted=authoritative;syncView();clearInput();}
+    if(!sameGameState(authoritative,predicted)){predicted=authoritative;syncView();clearInput();}
     rememberBest();status(`Saved · ${result.session.actions} Myelin frames`);
   }catch(e){
     resumeEpoch++;running=false;countdown=0;clearInput();pending=[];
@@ -216,7 +220,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyR'){e.preventDefault();if(!e.repeat)$('#restart').click();return;}
   if(e.code==='Enter'&&!e.target.closest?.('button')&&!$('#overlay').hidden){e.preventDefault();if(!e.repeat)$('#launch').click();return;}
   if((!running&&!countdown)||e.target.closest?.('button'))return;
-  const bit=mapping[e.code];if(bit){e.preventDefault();if(!e.repeat){hoverX=null;input.press(e.code,bit,predicted);}}
+  const bit=mapping[e.code];if(bit){e.preventDefault();if(!e.repeat){hoverX=null;if(bit===1||bit===2){prismPointer?.clear();prismGestures?.clear();}input.press(e.code,bit,predicted);}}
 });
 addEventListener('keyup',e=>{if(mapping[e.code]){input.release(e.code);if(running||countdown)e.preventDefault();}});
 addEventListener('blur',()=>{clearInput();void pause();});
@@ -233,18 +237,24 @@ for(const b of document.querySelectorAll('[data-input]')){
 function pointerPosition(e){return pointerInViewport(e.clientX,e.clientY,canvas.getBoundingClientRect(),id,matchMedia('(pointer:coarse)').matches);}
 canvas.addEventListener('pointerdown',e=>{
   if((!running&&!countdown)||e.button!==0)return;e.preventDefault();
-  const p=pointerPosition(e);if(!gesture.begin(e.pointerId,p.x,p.y,e.pointerType==='mouse'?p.x:predicted.x))return;
+  const p=pointerPosition(e);
+  if(prismPointer){prismGestures.begin(e.pointerId,e.clientX,e.clientY,e.pointerType,e.timeStamp);if(!prismPointer.begin(e.pointerId,p.x,e.pointerType,predicted))return;canvas.focus({preventScroll:true});canvas.setPointerCapture(e.pointerId);return;}
+  if(!gesture.begin(e.pointerId,p.x,p.y,e.pointerType==='mouse'?p.x:predicted.x))return;
   canvas.focus();canvas.setPointerCapture(e.pointerId);hoverX=null;
 });
 canvas.addEventListener('pointermove',e=>{
   if(!running&&!countdown)return;const p=pointerPosition(e);
+  if(prismPointer){prismPointer.move(e.pointerId,p.x,e.pointerType,predicted);const bit=prismGestures.move(e.pointerId,e.clientX,e.clientY);if(bit)input.pulse(bit,predicted);return;}
   if(gesture.owner!==null){const bit=gesture.move(e.pointerId,p.x,p.y);if(bit)input.pulse(bit,predicted);}
   else if(e.pointerType==='mouse'&&(id==='prism-breaker'||id==='starfall'))hoverX=p.x;
 });
 canvas.addEventListener('pointerleave',()=>{hoverX=null;});
-for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,e=>gesture.end(e.pointerId));
+canvas.addEventListener('pointerup',e=>{if(prismPointer){const p=pointerPosition(e);prismPointer.move(e.pointerId,p.x,e.pointerType,predicted);prismPointer.end(e.pointerId);const bit=prismGestures.end(e.pointerId,e.clientX,e.clientY,e.timeStamp);if(bit)input.pulse(bit,predicted);}gesture.end(e.pointerId);});
+for(const ev of ['pointercancel','lostpointercapture'])canvas.addEventListener(ev,e=>{prismPointer?.cancel(e.pointerId);prismGestures?.cancel(e.pointerId);gesture.end(e.pointerId);});
+addEventListener('resize',()=>{clearInput();});
 function controls(){
   let bits=input.read(predicted);if(id==='starfall'&&autoFire)bits|=16;
+  if(prismPointer){const steering=prismPointer.bits(predicted);return steering===null?bits:(bits&~3)|steering;}
   const target=gesture.target??hoverX;
   if(target!==null&&(id==='prism-breaker'||id==='starfall')){
     bits&=~3;if(target<predicted.x-12)bits|=1;else if(target>predicted.x+12)bits|=2;

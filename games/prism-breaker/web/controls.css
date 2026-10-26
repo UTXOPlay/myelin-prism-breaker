@@ -1,0 +1,66 @@
+/* Scene controls live in the space reserved by viewport(), never on the paddle.
+   Keep this sheet last: the shared arcade and overlay skins are intentionally
+   overridden here, only for this game's independent browser package. */
+html.game-only[data-game="prism-breaker"] .game-surface>.hud,
+html.game-only[data-game="prism-breaker"] .game-surface>.prism-wordmark,
+html.game-only[data-game="prism-breaker"] .game-surface>.prism-build,
+html.game-only[data-game="prism-breaker"] .game-surface>.notice{pointer-events:none;user-select:none}
+html.game-only[data-game="prism-breaker"] .game-surface>.touch{display:none!important}
+html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions{left:50%;right:auto;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(420px,calc(100% - 32px));display:flex;flex-direction:row;justify-content:space-between;gap:0;zoom:1;pointer-events:none}
+html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions button{display:flex;flex-direction:column;justify-content:center;gap:3px;width:30%;min-width:0;min-height:52px;padding:5px;pointer-events:auto;touch-action:none}
+html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions b{width:auto;height:auto;border:0;background:none;font-size:20px;line-height:1}
+html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions span{font-size:11px}
+html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions kbd{display:none}
+html.game-only[data-game="prism-breaker"] .game-surface>.prism-pulse{left:50%;right:auto;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);width:min(126px,calc((100vw - 56px)/3));min-height:52px;padding:6px;font-size:11px;zoom:1;touch-action:none;user-select:none}
+html.game-only[data-game="prism-breaker"] .game-surface>.signature-mechanic{top:108px;left:20px;width:240px;padding:8px 12px;zoom:1;backdrop-filter:none}
+html.game-only[data-game="prism-breaker"] .game-surface>.signature-mechanic small{display:none}
+html.game-only[data-game="prism-breaker"] .game-surface>.signature-mechanic .signature-meter{margin-top:5px}
+html.game-only[data-game="prism-breaker"] .game-surface>.prism-build{top:108px;bottom:auto;left:auto;right:20px;max-width:260px;font-size:11px;text-align:right;zoom:1}
+html.game-only[data-game="prism-breaker"] .game-surface>.prism-build small{font-size:10px}
+html.game-only[data-game="prism-breaker"] .game-surface>.notice{top:108px;left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);padding:4px 12px;border:0;border-radius:5px;font:600 12px/1.5 system-ui;white-space:normal;text-align:center;background:#131527c9;box-shadow:none}
+html.game-only[data-game="prism-breaker"] .game-surface .game-menu .prism-lens{position:static;inset:auto;transform:none;zoom:1;margin:8px 0;min-height:44px;width:auto}
+@media(min-width:1500px) and (min-height:1100px){
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-mechanic,html.game-only[data-game="prism-breaker"] .game-surface>.prism-build,html.game-only[data-game="prism-breaker"] .game-surface>.notice{top:calc(108px * var(--ui))}
+ html.game-only[data-game="prism-breaker"] .game-surface>.notice{font-size:calc(12px * var(--ui))}
+}
+@media(max-width:600px){
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-mechanic{top:108px;left:14px;width:calc(100% - 28px)}
+ html.game-only[data-game="prism-breaker"] .game-surface>.prism-build{top:148px;left:14px;right:14px;max-width:none;text-align:center}
+ html.game-only[data-game="prism-breaker"] .game-surface>.prism-build>span{display:none}
+ html.game-only[data-game="prism-breaker"] .game-surface>.prism-build small{margin:0}
+ html.game-only[data-game="prism-breaker"] .game-surface>.notice{top:148px;font-size:11px}
+ html.game-only[data-game="prism-breaker"] .game-surface:has(.notice:not([hidden]))>.prism-build{visibility:hidden}
+}
+@media(max-height:500px){
+ html.game-only[data-game="prism-breaker"] .game-surface>.prism-wordmark{display:none}
+ html.game-only[data-game="prism-breaker"] .game-surface>.hud{top:12px;left:50%;transform:translateX(-50%);display:flex;width:min(400px,55%);font-size:10px}
+ html.game-only[data-game="prism-breaker"] .game-surface>.hud strong{font-size:20px!important}
+ html.game-only[data-game="prism-breaker"] .game-surface>.hud label{font-size:8px;letter-spacing:1px}
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-mechanic{top:76px;left:12px;width:130px}
+ html.game-only[data-game="prism-breaker"] .game-surface>.prism-build{top:49px;left:50%;right:auto;transform:translateX(-50%);width:50%;text-align:center}
+ html.game-only[data-game="prism-breaker"] .game-surface>.prism-build>span{display:none}
+ html.game-only[data-game="prism-breaker"] .game-surface>.prism-build small{margin:0}
+ html.game-only[data-game="prism-breaker"] .game-surface>.notice{top:48px;font-size:11px}
+ html.game-only[data-game="prism-breaker"] .game-surface:has(.notice:not([hidden]))>.prism-build{visibility:hidden}
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions,html.game-only[data-game="prism-breaker"] .game-surface>.prism-pulse{bottom:max(12px,env(safe-area-inset-bottom))}
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions button,html.game-only[data-game="prism-breaker"] .game-surface>.prism-pulse{min-height:48px}
+}
+
+@media(min-width:1500px) and (min-height:1100px){
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-mechanic,html.game-only[data-game="prism-breaker"] .game-surface>.prism-build{zoom:var(--ui);top:108px}
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions{width:calc(420px * var(--ui));bottom:calc(16px * var(--ui))}
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions button,html.game-only[data-game="prism-breaker"] .game-surface>.prism-pulse{min-height:calc(52px * var(--ui));font-size:calc(11px * var(--ui))}
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions span{font-size:calc(11px * var(--ui))}
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions b{font-size:calc(20px * var(--ui))}
+ html.game-only[data-game="prism-breaker"] .game-surface>.prism-pulse{width:calc(126px * var(--ui));bottom:calc(16px * var(--ui))}
+}
+
+/* Touch play is a single-finger surface, with no skill buttons to reach for. */
+.prism-gesture-help{display:none}
+@media(pointer:coarse),(max-width:600px){
+ html.game-only[data-game="prism-breaker"] .game-surface>.signature-actions,
+ html.game-only[data-game="prism-breaker"] .game-surface>.prism-pulse,
+ html.game-only[data-game="prism-breaker"] .game-surface>.prism-build,
+ html.game-only[data-game="prism-breaker"] .game-surface>.notice{display:none!important}
+ html.game-only[data-game="prism-breaker"] .overlay .prism-gesture-help{display:block;color:#f2dfbf;line-height:1.8;font-size:12px;margin:8px auto 16px}
+}
