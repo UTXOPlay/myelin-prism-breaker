@@ -24,3 +24,16 @@ The harness uses Chromium mouse and CDP touch events at 1920×1080, 2560×1080, 
 ## Production compatibility
 
 Deploy only the independent Prism service with the existing runtime executable and persistent data mount. Preserve the native executable SHA-256 `847dc361e27a904992f0a0fd42757e5d0c07b6d16932151e7c56dc9a52b51261`. Keep the previous image and a stopped-service data backup for rollback. Store and other game services need no restart.
+
+## 2026-10-26 release acceptance
+
+Deployed implementation commit `217f96b7561d63f5d4056807f68f5883bf37113c` as `myelin-prism-breaker:controls-217f96b`. Release files and one-service Compose configuration are in `/data/utxoplay/releases/20261026-prism-controls`. The previous image remains `myelin-prism-breaker:independent-004cc047`; use this release's `rollback.compose.json` with Compose project `utxoplay-independent` and service `myelin-prism-breaker` to roll back.
+
+- 26 unit tests and 2 host tests passed; independent build passed.
+- All six viewport browser checks passed against the staged production image and preserved production native executable, including native replay and rotated pointer mapping.
+- Public HTTPS at `https://store.utxoplay.io/games/prism-breaker/` passed the full 390×844 gesture/input/replay check with a disposable store guest.
+- Eight served HTML/CSS/JS/module hashes match the tested build. Native executable hash remained identical. No Rust, Cargo lock, browser rule engine or level source changed.
+- The stopped-service save backup is `/data/utxoplay/backups/prism-before-controls-217f96b/prism-refraction.tar.gz`; the original data mount remains `/data/utxoplay/shared/prism-refraction`.
+- The new Prism container is healthy. The store, seven other games and twelve unrelated services retained all 20 previous container IDs.
+
+Physical-device Safari/Android acceptance remains unmeasured; Chromium touch emulation is the recorded mobile verification.
