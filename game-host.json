@@ -1,0 +1,18 @@
+{
+  "name": "myelin-prism-breaker",
+  "port": 8887,
+  "runtimePort": 8787,
+  "games": [
+    {
+      "id": "prism-breaker",
+      "webRoot": "dist/prism-breaker",
+      "runtimePath": "/prism-breaker",
+      "rooms": false,
+      "socket": false
+    }
+  ],
+  "runtimeCommand": [
+    "target/release/myelin-prism-breaker"
+  ],
+  "manifest": "games/prism-breaker/Cargo.toml"
+}
